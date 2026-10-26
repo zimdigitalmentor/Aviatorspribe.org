@@ -169,7 +169,8 @@ dialog ol { padding-left: 20px; }
 }
 .support-link { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; text-decoration: none; }
 .support-link:hover { color: var(--ink); }
-.gate-support { margin-top: 8px; }
+.gate .btn.support { width: 100%; max-width: 320px; margin: 14px auto 0; }
+#refusal .btn.support { max-width: none; }
 
 /* ----- account button + plan banner ----- */
 .top-actions { display: flex; align-items: center; gap: 10px; }
