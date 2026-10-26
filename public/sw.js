@@ -1,7 +1,7 @@
 // ===== Service worker: offline support + updates =====
 // App files are fetched network-first, so deploys show up without touching this file.
 // Bump VERSION only when this service worker's own logic changes.
-const VERSION = 'v2.0.4';
+const VERSION = 'v2.0.5';
 const CACHE = `aviator-tracker-${VERSION}`;
 const FONT_CACHE = 'aviator-tracker-fonts';
 
@@ -32,8 +32,9 @@ const APP_SHELL = [
   './img/logo.png',
 ];
 
+// Take over as soon as installed: an old worker left in charge serves stale CSS/JS next to fresh HTML
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
