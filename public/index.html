@@ -59,7 +59,15 @@
     <h1>Aviator Tracker</h1>
     <div class="top-actions">
       <button id="installBtn" class="btn btn-primary btn-sm" hidden>Install app</button>
-      <button id="acctBtn" class="acct" aria-label="Plan and account" hidden></button>
+      <div class="acct-wrap">
+        <button id="acctBtn" class="acct" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false" hidden></button>
+        <div id="acctMenu" class="menu" role="menu" hidden>
+          <div class="menu-who"><b id="menuName"></b><span id="menuEmail"></span></div>
+          <button role="menuitem" data-menu="plan">Plan &amp; subscription</button>
+          <a role="menuitem" class="support-link" href="mailto:ziopozen@gmail.com?subject=Aviator%20Tracker%20support"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>Customer support</a>
+          <button role="menuitem" data-menu="signout" class="danger">Sign out</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -76,6 +84,8 @@
     </form>
 
     <section id="list" aria-live="polite"></section>
+
+    <a class="btn support" href="mailto:ziopozen@gmail.com?subject=Aviator%20Tracker%20support"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>Customer support</a>
 
     <footer class="note">
       Each round’s crash point is generated independently, so the chance of reaching a target
@@ -102,6 +112,7 @@
         </div>
         <div id="gsiBtn" class="gsi"></div>
         <p id="signinMsg" class="gate-msg" role="alert"></p>
+        <a class="support-link gate-support" href="mailto:ziopozen@gmail.com?subject=Aviator%20Tracker%20support"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>Customer support</a>
       </div>
       <div id="refusal" hidden>
         <h2>Account in use on another phone</h2>
@@ -112,6 +123,7 @@
           <button class="btn" id="moveHere">This is my account — move it to this phone</button>
         </div>
         <p id="refusalMsg" class="gate-msg" role="alert"></p>
+        <a class="support-link gate-support" href="mailto:ziopozen@gmail.com?subject=Aviator%20Tracker%20support"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>Customer support</a>
       </div>
     </div>
   </section>

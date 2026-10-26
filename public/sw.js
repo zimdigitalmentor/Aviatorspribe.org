@@ -1,6 +1,6 @@
 // ===== Service worker: offline support + updates =====
 // Bump VERSION whenever you change any file so installed apps pick up the update.
-const VERSION = 'v2.0.1';
+const VERSION = 'v2.0.2';
 const CACHE = `aviator-tracker-${VERSION}`;
 const FONT_CACHE = 'aviator-tracker-fonts';
 

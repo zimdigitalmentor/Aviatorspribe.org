@@ -146,6 +146,31 @@ dialog ol { padding-left: 20px; }
 .toast.show { opacity: 1; pointer-events: auto; }
 .toast .btn { padding: 6px 12px; font-size: 13px; }
 
+/* ----- account menu + customer support ----- */
+.acct-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 230px; max-width: calc(100vw - 32px);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+}
+.menu-who { display: flex; flex-direction: column; padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; font-size: 13px; color: var(--muted); }
+.menu-who b { color: var(--ink); font-size: 15px; font-weight: 500; }
+.menu-who b, .menu-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu button, .menu a {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: none; border-radius: 10px;
+  background: none; color: var(--ink); font: 500 15px var(--sans); text-align: left; text-decoration: none; cursor: pointer;
+}
+.menu button:hover, .menu a:hover, .menu button:focus-visible, .menu a:focus-visible { background: var(--panel); }
+.menu .danger { color: #ff6b8a; }
+.ico { width: 20px; height: 20px; flex: none; }
+.btn.support {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 640px;
+  margin: 24px auto 0; text-decoration: none;
+}
+.support-link { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; text-decoration: none; }
+.support-link:hover { color: var(--ink); }
+.gate-support { margin-top: 8px; }
+
 /* ----- account button + plan banner ----- */
 .top-actions { display: flex; align-items: center; gap: 10px; }
 .acct {

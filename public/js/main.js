@@ -60,15 +60,44 @@ document.getElementById('list').addEventListener('click', (e) => {
 
 /* ----- account: avatar, plan banner, sync ----- */
 const acctBtn = document.getElementById('acctBtn');
+const acctMenu = document.getElementById('acctMenu');
 const banner = document.getElementById('planBanner');
-acctBtn.addEventListener('click', () => openSubscribe());
+
+function toggleMenu(open = acctMenu.hidden) {
+  acctMenu.hidden = !open;
+  acctBtn.setAttribute('aria-expanded', String(open));
+}
+acctBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
+acctMenu.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-menu]');
+  toggleMenu(false);
+  if (item?.dataset.menu === 'plan') openSubscribe();
+  if (item?.dataset.menu === 'signout') session.signOut();
+});
+document.addEventListener('click', (e) => { if (!acctMenu.hidden && !e.target.closest('.acct-wrap')) toggleMenu(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMenu(false); });
+
+/** Pre-fill support emails with the account, so support can find the customer. */
+function setSupportLinks(me) {
+  document.querySelectorAll('a.support-link, a.btn.support').forEach((a) => {
+    const url = new URL(a.href);
+    url.search = `?subject=${encodeURIComponent('Aviator Tracker support')}`
+      + (me ? `&body=${encodeURIComponent(`Account: ${me.email}
+
+`)}` : '');
+    a.href = url.href.replace(/\+/g, '%20');
+  });
+}
 document.getElementById('bannerBtn').addEventListener('click', () => openSubscribe());
 
 let syncedFor = null;
 
 async function applyAccount(me) {
   acctBtn.hidden = !me;
-  if (!me) { stopSync(); syncedFor = null; banner.hidden = true; return; }
+  setSupportLinks(me);
+  if (!me) { toggleMenu(false); stopSync(); syncedFor = null; banner.hidden = true; return; }
+  document.getElementById('menuName').textContent = me.name || 'Your account';
+  document.getElementById('menuEmail').textContent = me.email;
   acctBtn.innerHTML = me.picture
     ? `<img src="${me.picture.replace(/"/g, '&quot;')}" alt="" referrerpolicy="no-referrer">`
     : (me.name || '?').trim()[0].toUpperCase();
