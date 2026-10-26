@@ -160,22 +160,6 @@ $('otherAccount').addEventListener('click', () => {
   showSignIn();
 });
 
-$('moveHere').addEventListener('click', async (e) => {
-  const btn = e.currentTarget, msg = $('refusalMsg');
-  btn.disabled = true;
-  msg.textContent = 'Moving your account to this phone…';
-  try {
-    finish(await api('/devices/transfer', { method: 'POST', body: await deviceBody(lastIdToken), retry: false }));
-  } catch (err) {
-    if (err.code === 'bad_google_token') { showSignIn('Please sign in again to confirm it is you.'); return; }
-    const support = err.body?.support || appConfig?.supportContact;
-    msg.textContent = (err instanceof ApiError ? err.message : 'Could not reach the server. Try again.')
-      + (support && err.code !== 'bad_google_token' ? ` Support: ${support}` : '');
-  } finally {
-    btn.disabled = false;
-  }
-});
-
 export async function signOut() {
   try { await api('/auth/logout', { method: 'POST', retry: false }); } catch { /* clear locally anyway */ }
   try { google.accounts.id.disableAutoSelect(); } catch { /* GIS not loaded */ }

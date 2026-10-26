@@ -142,6 +142,10 @@ if ('serviceWorker' in navigator) {
           }
         });
       });
+      // Installed apps can stay open for days: look for a new service worker whenever they come back to the foreground
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
       let reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!reloaded) { reloaded = true; location.reload(); }

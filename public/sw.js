@@ -1,6 +1,7 @@
 // ===== Service worker: offline support + updates =====
-// Bump VERSION whenever you change any file so installed apps pick up the update.
-const VERSION = 'v2.0.3';
+// App files are fetched network-first, so deploys show up without touching this file.
+// Bump VERSION only when this service worker's own logic changes.
+const VERSION = 'v2.0.4';
 const CACHE = `aviator-tracker-${VERSION}`;
 const FONT_CACHE = 'aviator-tracker-fonts';
 
@@ -72,10 +73,24 @@ self.addEventListener('fetch', (e) => {
 
   // Page navigations: network first, fall back to cached app shell (works offline)
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).catch(() => caches.match('./index.html')));
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put('./index.html', copy)); }
+          return res;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
     return;
   }
 
-  // Static files: cache first
-  e.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
+  // Static files: network first so every deploy shows up immediately; cached copy only when offline
+  e.respondWith(
+    fetch(req)
+      .then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+        return res;
+      })
+      .catch(() => caches.match(req))
+  );
 });

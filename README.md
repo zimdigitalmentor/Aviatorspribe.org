@@ -154,10 +154,9 @@ Once installed, it opens in its own window with the splash screen and works offl
 ## 5. Releasing updates
 
 1. Edit your files. Database changes go in a new `server/migrations/NNN_name.sql`.
-2. Open `public/sw.js` and bump `VERSION` (e.g. `v2.0.0` → `v2.0.1`).
-3. Deploy again.
+2. Deploy again.
 
-Installed copies show an **Update available → Reload** message the next time they open online.
+The service worker fetches app files network-first, so users get the new version the next time they open or reload the app online; the cache is only used offline. Bump `VERSION` in `public/sw.js` only when you change `sw.js` itself; installed copies then show an **Update available → Reload** message.
 
 ---
 
