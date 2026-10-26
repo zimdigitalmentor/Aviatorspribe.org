@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Aviator Tracker</title>
+  <meta name="description" content="Log when a target multiplier appears, get a next round prediction, and track how accurate it is.">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#141516">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Icons: desktop browsers, Windows, Android -->
+  <link rel="icon" href="icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+
+  <!-- iOS / iPadOS -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Aviator Tracker">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Fonts (app falls back to system fonts when offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>
+    // Load fonts without blocking the splash (no inline handlers, so the CSP can stay strict)
+    (function () {
+      var l = document.createElement('link'); l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Roboto:wght@400;500;700&display=swap';
+      document.head.appendChild(l);
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Launch splash -->
+  <div id="splash" role="status" aria-label="Loading">
+    <!-- TEMPORARY logo (wordmark misspelt, plane resembles Spribe's): replace before go-live -->
+    <img class="logo" src="img/logo.png" alt="" width="180" height="180">
+    <div class="brand">
+      <div class="by">Welcome to</div>
+      <div class="name">Aviator <span>Tracker</span></div>
+    </div>
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+  </div>
+  <script>
+    // Start the splash timer immediately, independent of network or script loading
+    setTimeout(function () {
+      var sp = document.getElementById('splash'); if (!sp) return;
+      sp.classList.add('hide'); setTimeout(function () { sp.remove(); }, 450);
+    }, 1600);
+  </script>
+
+  <header class="topbar">
+    <h1>Aviator Tracker</h1>
+    <div class="top-actions">
+      <button id="installBtn" class="btn btn-primary btn-sm" hidden>Install app</button>
+      <button id="acctBtn" class="acct" aria-label="Plan and account" hidden></button>
+    </div>
+  </header>
+
+  <div id="planBanner" class="banner" hidden>
+    <span id="bannerText"></span>
+    <button id="bannerBtn" class="btn btn-hit btn-sm">Renew</button>
+  </div>
+
+  <main>
+    <form class="add" id="addForm" autocomplete="off">
+      <input id="newTarget" type="number" inputmode="decimal" min="1.01" step="0.01"
+             placeholder="Target multiplier, e.g. 7" aria-label="Target multiplier">
+      <button type="submit" class="btn btn-primary">Track</button>
+    </form>
+
+    <section id="list" aria-live="polite"></section>
+
+    <footer class="note">
+      Each round’s crash point is generated independently, so the chance of reaching a target
+      is the same every round: about 0.97 ÷ target. The scoreboard on each tracker shows how
+      often the prediction actually lands. <span id="dataNote">Data stays on this device.</span>
+    </footer>
+  </main>
+
+  <!-- Sign-in gate (shown after the splash when there is no valid session) -->
+  <section id="signin" class="gate" hidden>
+    <div class="gate-box">
+      <img class="logo" src="img/logo.png" alt="" width="180" height="180">
+      <div class="brand">
+        <div class="by">Welcome to</div>
+        <div class="name">Aviator <span>Tracker</span></div>
+      </div>
+      <div id="signinMain">
+        <p class="gate-lead">Sign in with Google to continue.</p>
+        <div id="iosHint" class="hint" hidden>
+          <p><b>Install the app first, then sign in from the home-screen icon.</b>
+            On iPhone and iPad, Safari and the installed app count as two different phones.</p>
+          <button class="btn btn-primary" id="iosHowBtn">How to install</button>
+          <button class="btn-link" id="iosAnyway">Continue in Safari anyway</button>
+        </div>
+        <div id="gsiBtn" class="gsi"></div>
+        <p id="signinMsg" class="gate-msg" role="alert"></p>
+      </div>
+      <div id="refusal" hidden>
+        <h2>Account in use on another phone</h2>
+        <p>This account is already in use on another phone. Each $10 monthly subscription covers one phone.
+          Please sign in with your own Google account and subscribe; sharing accounts is not allowed.</p>
+        <div class="stack">
+          <button class="btn btn-primary" id="otherAccount">Use a different Google account</button>
+          <button class="btn" id="moveHere">This is my account — move it to this phone</button>
+        </div>
+        <p id="refusalMsg" class="gate-msg" role="alert"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Subscription screen -->
+  <dialog id="subDlg" class="sheet" aria-label="Subscription">
+    <div class="sheet-body"></div>
+  </dialog>
+
+  <!-- iOS install help -->
+  <dialog id="iosDlg">
+    <h2>Install on iPhone or iPad</h2>
+    <ol>
+      <li>Open this page in <b>Safari</b>.</li>
+      <li>Tap the <b>Share</b> button.</li>
+      <li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+    </ol>
+    <button class="btn btn-primary" data-close>Got it</button>
+  </dialog>
+
+  <!-- Generic install help (Firefox, Safari on Mac, etc.) -->
+  <dialog id="helpDlg">
+    <h2>Install this app</h2>
+    <p id="helpText"></p>
+    <button class="btn btn-primary" data-close>Got it</button>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

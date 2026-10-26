@@ -1,0 +1,40 @@
+# Production stack for the VPS. Copy this folder to /opt/aviator-tracker on the server,
+# create .env from .env.production.example, then: docker compose up -d
+# The app is published on 127.0.0.1:5173 only; the existing Caddy/Nginx proxy serves it on 443.
+name: aviator-tracker
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: aviator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: aviator_tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Not published: only the app container can reach it. For psql use: docker compose exec db psql -U aviator aviator_tracker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aviator -d aviator_tracker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE in .env, e.g. ghcr.io/owner/aviator-tracker:latest}
+    restart: always
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://aviator:${POSTGRES_PASSWORD}@db:5432/aviator_tracker?sslmode=disable
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+volumes:
+  pgdata:

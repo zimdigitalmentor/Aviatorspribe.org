@@ -1,0 +1,26 @@
+{
+  "name": "aviator-tracker",
+  "version": "2.0.0",
+  "description": "Aviator Tracker: installable PWA with Google sign-in, Paynow subscriptions and synced trackers.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "reset-device": "node scripts/reset-device.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "google-auth-library": "^11.3.1",
+    "helmet": "^8.3.0",
+    "node-cron": "^4.6.0",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
+  }
+}

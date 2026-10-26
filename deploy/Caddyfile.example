@@ -1,0 +1,12 @@
+# Add to the VPS's existing Caddyfile, then: sudo systemctl reload caddy
+# Caddy gets and renews the Let's Encrypt certificates automatically.
+
+aviatorspribe.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:5173
+}
+
+# One canonical origin keeps the session cookie and Google sign-in origin consistent.
+www.aviatorspribe.org {
+	redir https://aviatorspribe.org{uri} permanent
+}

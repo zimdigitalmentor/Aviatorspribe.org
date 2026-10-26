@@ -1,0 +1,29 @@
+# /etc/nginx/sites-available/aviatorspribe.org
+#   sudo ln -s /etc/nginx/sites-available/aviatorspribe.org /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#   sudo certbot --nginx -d aviatorspribe.org -d www.aviatorspribe.org
+# Certbot adds the 443 blocks and certificates; it keeps the redirects below.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.aviatorspribe.org;
+    return 301 https://aviatorspribe.org$request_uri;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name aviatorspribe.org;
+
+    client_max_body_size 2m;
+
+    location / {
+        proxy_pass http://127.0.0.1:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

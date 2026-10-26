@@ -1,0 +1,34 @@
+# Local stack: `docker compose up --build` → http://localhost:5173
+# Secrets and settings come from .env (copy .env.example). The app reaches Postgres as host "db".
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aviator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: aviator_tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"   # for psql / npm test from the host; 5432 is often taken by a local install
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aviator -d aviator_tracker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://aviator:${POSTGRES_PASSWORD}@db:5432/aviator_tracker?sslmode=disable
+    ports:
+      - "5173:5173"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

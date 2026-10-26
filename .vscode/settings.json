@@ -1,0 +1,7 @@
+{
+  "liveServer.settings.root": "/public",
+  "liveServer.settings.port": 5500,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "files.associations": { "*.webmanifest": "json" }
+}
