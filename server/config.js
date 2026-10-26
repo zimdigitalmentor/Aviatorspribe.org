@@ -7,6 +7,9 @@ function required(name) {
   return v;
 }
 
+// Paynow rejects quoted or padded credentials ("Invalid Id." / "Invalid Hash."), so forgive stray quotes and spaces in .env
+const clean = (v) => String(v || '').trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+
 export const config = {
   production: env.NODE_ENV === 'production',
   port: Number(env.PORT) || 5173,
@@ -19,10 +22,10 @@ export const config = {
   // Owner absorbs Paynow fees: tiles show "Free". Set to a label such as "2.5%" to show a fee instead.
   feeLabel: env.FEE_LABEL || 'Free',
   paynow: {
-    id: env.PAYNOW_INTEGRATION_ID || '',
-    key: env.PAYNOW_INTEGRATION_KEY || '',
-    mode: env.PAYNOW_MODE === 'live' ? 'live' : 'test',
-    testAuthEmail: env.PAYNOW_TEST_AUTHEMAIL || env.PAYNOW_EMAIL || '',
+    id: clean(env.PAYNOW_INTEGRATION_ID),
+    key: clean(env.PAYNOW_INTEGRATION_KEY),
+    mode: clean(env.PAYNOW_MODE) === 'live' ? 'live' : 'test',
+    testAuthEmail: clean(env.PAYNOW_TEST_AUTHEMAIL || env.PAYNOW_EMAIL),
     // Visa/Mastercard stays "Coming soon" until the merchant account is verified.
     cardsEnabled: env.PAYNOW_CARDS_ENABLED === 'true',
   },
@@ -32,3 +35,6 @@ export const config = {
 };
 
 if (config.sessionSecret.length < 32) throw new Error('SESSION_SECRET must be at least 32 characters');
+if (config.paynow.id && !/^\d+$/.test(config.paynow.id)) {
+  console.warn(`[config] PAYNOW_INTEGRATION_ID should be digits only (got ${JSON.stringify(config.paynow.id)}); Paynow will answer "Invalid Id."`);
+}
