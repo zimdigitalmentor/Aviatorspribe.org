@@ -79,7 +79,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMenu
 
 /** Pre-fill support emails with the account, so support can find the customer. */
 function setSupportLinks(me) {
-  document.querySelectorAll('a.support-link, a.btn.support').forEach((a) => {
+  document.querySelectorAll('a.support-link, a.btn.support, a.help-card').forEach((a) => {
     const url = new URL(a.href);
     url.search = `?subject=${encodeURIComponent('Aviator Tracker support')}`
       + (me ? `&body=${encodeURIComponent(`Account: ${me.email}
@@ -95,7 +95,7 @@ let syncedFor = null;
 async function applyAccount(me) {
   acctBtn.hidden = !me;
   setSupportLinks(me);
-  if (!me) { toggleMenu(false); stopSync(); syncedFor = null; banner.hidden = true; return; }
+  if (!me) { toggleMenu(false); stopSync(); syncedFor = null; banner.hidden = true; showPaywall(null, true); return; }
   document.getElementById('menuName').textContent = me.name || 'Your account';
   document.getElementById('menuEmail').textContent = me.email;
   acctBtn.innerHTML = me.picture
@@ -104,6 +104,7 @@ async function applyAccount(me) {
   acctBtn.title = `${me.name} · plan and account`;
 
   const active = session.isActive();
+  showPaywall(me, active);
   const left = active ? new Date(me.expiresAt) - Date.now() : 0;
   banner.hidden = active && left > 2 * 864e5;               // show from 2 days before expiry
   document.getElementById('bannerText').textContent = active
@@ -125,6 +126,41 @@ async function applyAccount(me) {
   }
 }
 session.onMeChange(applyAccount);
+
+/* ----- paywall: the app is locked while there is no active plan ----- */
+const paywall = document.getElementById('paywall');
+let expiryTimer = null;
+
+function showPaywall(me, active) {
+  clearTimeout(expiryTimer);
+  paywall.hidden = active;
+  document.body.classList.toggle('paywalled', !active);
+  if (active) {
+    // Lock the app the moment the plan runs out, even if it is left open (timers cap at ~24 days)
+    const left = new Date(me.expiresAt) - Date.now();
+    if (left < 2 ** 31 - 1) expiryTimer = setTimeout(() => applyAccount(session.me), left + 1000);
+    return;
+  }
+  toggleMenu(false);
+  const expired = !!me.expiresAt;
+  document.getElementById('payBadge').textContent = expired ? 'Expired' : 'No plan';
+  document.getElementById('payTitle').textContent = expired
+    ? 'Your subscription has expired'
+    : 'Subscribe to start tracking';
+  document.getElementById('payText').innerHTML = expired
+    ? `Your 30-day plan ended on <b>${fmtDate(me.expiresAt)}</b>. Please renew your subscription to keep using Aviator Tracker.`
+    : 'Aviator Tracker needs an active plan: <b>$10 for 30 days</b> on this phone.';
+  document.getElementById('payRenew').textContent = expired ? 'Renew subscription' : 'Subscribe now';
+  document.getElementById('payEmail').textContent = me.email;
+}
+
+document.getElementById('payRenew').addEventListener('click', () => openSubscribe());
+document.getElementById('paySignOut').addEventListener('click', () => session.signOut());
+
+// Re-check the plan with the server whenever the app comes back to the screen
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && session.me && navigator.onLine) session.refreshMe().catch(() => {});
+});
 
 /* ----- live clocks ----- */
 setInterval(tickClocks, 1000);

@@ -27,7 +27,22 @@ async function upsertUser(c, g) {
      RETURNING id`,
     [g.sub, g.email, g.name, g.picture]);
   await c.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [u.id]);  // serialise device changes per account
+  const { rows: grants } = await c.query(
+    `UPDATE pending_grants SET applied_at = now(), applied_to = $1
+     WHERE lower(email) = lower($2) AND applied_at IS NULL RETURNING days`, [u.id, g.email]);
+  for (const { days } of grants) await addDays(c, u.id, days);
   return u.id;
+}
+
+/** New subscription row of `days`, starting when the current plan (if any) ends. Caller holds the user row lock. */
+async function addDays(c, userId, days) {
+  const { rows: [s] } = await c.query(
+    `INSERT INTO subscriptions (user_id, plan_id, starts_at, expires_at)
+     SELECT $1, (SELECT id FROM plans WHERE code = 'monthly'), st.start, st.start + make_interval(days => $2)
+     FROM (SELECT greatest(now(), coalesce(max(expires_at), now())) AS start FROM subscriptions WHERE user_id = $1) st
+     RETURNING starts_at, expires_at`,
+    [userId, days]);
+  return s;
 }
 
 export async function profile(userId) {
@@ -147,6 +162,28 @@ export async function resetDevice(idOrEmail) {
   if (!u) throw new HttpError(404, 'not_found', 'No such user');
   const { rowCount } = await query('UPDATE devices SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [u.id]);
   return { userId: u.id, email: u.email, devicesRevoked: rowCount };
+}
+
+/** Admin: add days of access without a Paynow payment (cash). Stacks on top of any time left. */
+router.post('/admin/users/:id/grant', requireSession, requireAdmin, async (req, res) => {
+  res.json(await grantAccess(req.params.id, Number(req.body.days) || 30));
+});
+
+export async function grantAccess(idOrEmail, days = 30) {
+  if (!Number.isInteger(days) || days < 1 || days > 366) throw new HttpError(400, 'bad_days', 'Days must be 1 to 366');
+  return tx(async (c) => {
+    const { rows: [u] } = await c.query(
+      'SELECT id, email FROM users WHERE id::text = $1 OR lower(email) = lower($1) FOR UPDATE', [String(idOrEmail)]);
+    if (!u) {
+      // Not signed in yet: keep the grant and apply it on their first sign-in
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(idOrEmail))) throw new HttpError(404, 'not_found', 'No such user');
+      await c.query('INSERT INTO pending_grants (email, days) VALUES (lower($1), $2)', [String(idOrEmail), days]);
+      return { email: String(idOrEmail).toLowerCase(), days, pending: true,
+        note: 'Not signed in yet: the days start when they first sign in' };
+    }
+    const s = await addDays(c, u.id, days);
+    return { userId: u.id, email: u.email, days, startsAt: s.starts_at, expiresAt: s.expires_at };
+  });
 }
 
 /** Zimbabwean mobile number as 07XXXXXXXX (accepts +263 / 263 prefixes). */

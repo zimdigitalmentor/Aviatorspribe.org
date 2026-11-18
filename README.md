@@ -126,6 +126,18 @@ npm run reset-device -- someone@gmail.com
 
 or, signed in as an address listed in `ADMIN_EMAILS`: `POST /api/admin/users/<email or id>/reset-device`.
 
+Give someone access without Paynow (e.g. paid in cash). Days stack on any time they have left; if the email has not signed in yet, the days start on their first sign-in:
+
+```bash
+npm run grant -- someone@gmail.com 30
+# on the VPS:
+docker compose exec app node scripts/grant-access.js someone@gmail.com 30
+```
+
+or, as an admin: `POST /api/admin/users/<email or id>/grant` with `{ "days": 30 }`.
+
+When a plan ends, the app locks behind a "Your subscription has expired" screen until it is renewed.
+
 ### Defaults chosen for the open questions
 
 | Question | Current default | Where to change |

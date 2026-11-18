@@ -313,4 +313,45 @@ async function suite() {
     assert.deepEqual((await p.req('GET', '/trackers')).body.trackers, [t[1]]);
     assert.equal((await p.req('PUT', '/trackers', { trackers: [{ ...t[1], target: 1 }] })).status, 400);
   });
+
+  /* ===== expiry and cash grants ===== */
+
+  test('access ends when the plan expires; admin grant adds 30 days and stacks', async () => {
+    const p = await subscriber('noah');
+    const r = await p.req('POST', '/pay', { planId: (await plan(p)).id, method: 'ecocash', phone: '0771111111' });
+    await settle(r.body.reference, 'Paid');
+    await p.req('GET', `/pay/${r.body.reference}`);
+    assert.equal((await p.req('GET', '/me')).body.active, true);
+
+    // 31 days later
+    await query(`UPDATE subscriptions SET starts_at = starts_at - interval '31 days', expires_at = expires_at - interval '31 days'
+                 WHERE user_id = (SELECT id FROM users WHERE email = 'noah@example.com')`);
+    const me = (await p.req('GET', '/me')).body;
+    assert.equal(me.active, false);
+    assert.ok(new Date(me.expiresAt) < new Date(), 'expiresAt is kept so the app can say "expired"');
+    assert.equal((await p.req('GET', '/trackers')).status, 402);
+
+    const notAdmin = await p.req('POST', '/admin/users/noah@example.com/grant', { days: 30 });
+    assert.equal(notAdmin.status, 403);
+
+    await query(`UPDATE devices SET revoked_at = now() WHERE user_id IN (SELECT id FROM users WHERE email = 'admin@example.com')`);
+    const admin = await subscriber('admin');
+    const g = await admin.req('POST', '/admin/users/NOAH@example.com/grant', { days: 30 });
+    assert.equal(g.status, 200);
+    assert.equal(days(g.body.expiresAt), 30);
+    assert.equal((await p.req('GET', '/me')).body.active, true);
+    assert.equal((await p.req('GET', '/trackers')).status, 200);
+
+    const g2 = await admin.req('POST', '/admin/users/noah@example.com/grant', {});
+    assert.equal(days(g2.body.expiresAt), 60, 'a second grant stacks on the time left');
+    assert.equal((await admin.req('POST', '/admin/users/not-an-email/grant', {})).status, 404);
+
+    // cash customer who hasn't signed in yet: the grant waits for their first sign-in
+    const pend = await admin.req('POST', '/admin/users/Zoe@example.com/grant', { days: 30 });
+    assert.equal(pend.body.pending, true);
+    const z = await subscriber('zoe');
+    assert.equal(days((await z.req('GET', '/me')).body.expiresAt), 30);
+    assert.equal((await z.signIn('zoe')).body.active, true, 'signing in again does not apply it twice');
+    assert.equal(days((await z.req('GET', '/me')).body.expiresAt), 30);
+  });
 }

@@ -131,6 +131,24 @@
     </div>
   </section>
 
+  <!-- Paywall: signed in, but the plan has expired (or was never bought) -->
+  <section id="paywall" class="gate" hidden>
+    <div class="gate-box">
+      <img class="logo" src="img/logo.png" alt="" width="180" height="180">
+      <div class="paywall-card">
+        <span id="payBadge" class="pay-badge">Expired</span>
+        <h2 id="payTitle">Your subscription has expired</h2>
+        <p id="payText"></p>
+        <div class="stack">
+          <button class="btn btn-primary" id="payRenew">Renew subscription</button>
+          <a class="btn support" href="mailto:ziopozen@gmail.com?subject=Aviator%20Tracker%20support"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>Customer support</a>
+        </div>
+        <p class="pay-who">Signed in as <b id="payEmail"></b></p>
+        <button class="btn-link" id="paySignOut">Sign out</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Subscription screen -->
   <dialog id="subDlg" class="sheet" aria-label="Subscription">
     <div class="sheet-body"></div>
